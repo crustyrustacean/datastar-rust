@@ -21,6 +21,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
+actix = ["dep:actix-web", "dep:bytes", "dep:futures-util", "dep:serde", "dep:serde_json"]
 axum = ["dep:axum", "dep:serde", "dep:serde_json"]
 rocket = ["dep:rocket", "rocket/json"]
 tracing = ["dep:tracing"]
@@ -33,11 +34,13 @@ warp = [
 ]
 
 [dependencies]
+actix-web = { version = "4", default-features = false, optional = true }
 axum = { version = "0.8.9", default-features = false, optional = true, features = [
     "query",
     "json",
 ] }
 bytes = { version = "1", default-features = false, optional = true }
+futures-util = { version = "0.3.33", default-features = false, optional = true }
 rocket = { version = "0.5", default-features = false, optional = true }
 serde = { version = "1", default-features = false, optional = true, features = [
     "derive",
@@ -79,6 +82,8 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
     "fmt",
 ] }
 warp = { version = "0.4", default-features = false, features = ["test"] }
+actix-web = { version = "4", default-features = false, features = ["macros"] }
+urlencoding = "2"
 
 [lints.rust]
 unreachable_pub = "deny"
