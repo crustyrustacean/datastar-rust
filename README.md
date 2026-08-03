@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/crates/l/datastar.svg)](./LICENSE.md)
 
 An implementation of the [Datastar] SDK in Rust
-with framework integration for [Axum], [Rocket], and [Warp].
+with framework integration for [Actix Web], [Axum], [Rocket], and [Warp].
 
 Supports Datastar **1.0.4**. Its SSE event format and SDK defaults are unchanged
 from 1.0.3.
@@ -78,6 +78,7 @@ and responses for Axum and Warp. Set `DATASTAR_SDK_TEST_VERSION=latest` to test
 against the newest upstream suite.
 
 [Datastar]: https://data-star.dev
+[Actix Web]: https://github.com/actix/actix-web
 [Axum]: https://github.com/tokio-rs/axum
 [Rocket]: https://github.com/rwf2/rocket
 [Warp]: https://github.com/seanmonstar/warp

@@ -72,7 +72,7 @@ impl From<DatastarEvent> for Sse {
 /// #[get("/update")]
 /// async fn update() -> impl Responder {
 ///     PatchElements::new("<div>Hello!</div>")
-///         .into() // converts to Sse
+///         .into()
 /// }
 /// ```
 ///

@@ -129,12 +129,20 @@ codegen-units = 1
 lto = "thin"
 
 [[example]]
+name = "actix-hello"
+required-features = ["actix", "tracing"]
+
+[[example]]
 name = "axum-hello"
 required-features = ["axum", "tracing"]
 
 [[example]]
 name = "axum-live-reload"
 required-features = ["axum", "tracing"]
+
+[[example]]
+name = "actix-activity-feed"
+required-features = ["actix", "tracing"]
 
 [[example]]
 name = "axum-activity-feed"
