@@ -141,6 +141,10 @@ name = "axum-live-reload"
 required-features = ["axum", "tracing"]
 
 [[example]]
+name = "actix-live-reload"
+required-features = ["actix", "tracing"]
+
+[[example]]
 name = "actix-activity-feed"
 required-features = ["actix", "tracing"]
 
@@ -155,6 +159,10 @@ required-features = ["axum"]
 [[example]]
 name = "axum-test-suite"
 required-features = ["axum", "tracing"]
+
+[[example]]
+name = "actix-test-suite"
+required-features = ["actix", "tracing"]
 
 [[example]]
 name = "rocket-hello"

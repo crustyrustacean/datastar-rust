@@ -168,7 +168,7 @@ async fn read_signals_from_get_query_param() {
 
     // GET with datastar query param: the value is a JSON-encoded string
     let json_signals = serde_json::to_string(&TestSignals {
-        name: "query".to_string(),
+        name: "query".to_owned(),
         count: 7,
     })
     .unwrap();
