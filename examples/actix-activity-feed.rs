@@ -1,6 +1,13 @@
-use actix_web::{App, HttpServer, Responder, web::{self, Html, Path}};
+use actix_web::{
+    App, HttpServer, Responder,
+    web::{self, Html, Path},
+};
 use asynk_strim::{Yielder, stream_fn};
-use datastar::{actix::{ReadSignals, Sse}, DatastarEvent, prelude::{ElementPatchMode, PatchElements, PatchSignals}};
+use datastar::{
+    DatastarEvent,
+    actix::{ReadSignals, Sse},
+    prelude::{ElementPatchMode, PatchElements, PatchSignals},
+};
 use serde::{Deserialize, Serialize};
 use {
     std::error::Error,
@@ -38,12 +45,10 @@ pub enum Status {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                format!("{}=debug", env!("CARGO_CRATE_NAME")).into()
-            }),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -69,7 +74,7 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl Responder 
     // Values we will update in a loop
     let mut total = signals.total;
     let mut done = signals.done;
-    
+
     Sse::new(stream_fn(
         move |mut yielder: Yielder<DatastarEvent>| async move {
             // Signal event generation start
@@ -98,17 +103,14 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl Responder 
 
             // Signal event generation end
             let patch = PatchSignals::new(r#"{"generating": false}"#);
-                let event = patch.into_datastar_event();
+            let event = patch.into_datastar_event();
             yielder.yield_item(event).await;
         },
     ))
 }
 
 /// Creates one event with a given status
-async fn event(
-    path: Path<Status>,
-    ReadSignals(signals): ReadSignals<Signals>,
-) -> impl Responder {
+async fn event(path: Path<Status>, ReadSignals(signals): ReadSignals<Signals>) -> impl Responder {
     // Create the event stream, since we're patching both an element and a signal.
     Sse::new(stream_fn(
         move |mut yielder: Yielder<DatastarEvent>| async move {

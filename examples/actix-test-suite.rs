@@ -1,5 +1,5 @@
 use {
-    actix_web::{web, App, HttpServer, Responder},
+    actix_web::{App, HttpServer, Responder, web},
     asynk_strim::{Yielder, stream_fn},
     datastar::{
         actix::{ReadSignals, Sse},
@@ -17,9 +17,8 @@ use {
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                format!("{}=debug", env!("CARGO_CRATE_NAME")).into()
-            }),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();

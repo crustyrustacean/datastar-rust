@@ -2,13 +2,14 @@
 
 use {
     actix_web::{
+        App, HttpResponse, Responder,
         body::to_bytes,
         dev::ServiceResponse,
         http::{
-            header::{CACHE_CONTROL, CONTENT_TYPE},
             StatusCode,
+            header::{CACHE_CONTROL, CONTENT_TYPE},
         },
-        test, web, App, HttpResponse, Responder,
+        test, web,
     },
     datastar::{
         actix::{ReadSignals, Sse},

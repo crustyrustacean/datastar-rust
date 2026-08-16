@@ -3,12 +3,12 @@
 use {
     crate::prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
     actix_web::{
-        body::BoxBody, dev::Payload, error, http::Method, web, FromRequest, HttpRequest,
-        HttpResponse, Responder,
+        FromRequest, HttpRequest, HttpResponse, Responder, body::BoxBody, dev::Payload, error,
+        http::Method, web,
     },
     bytes::Bytes,
-    futures_util::{stream, Stream, StreamExt},
-    serde::{de::DeserializeOwned, Deserialize},
+    futures_util::{Stream, StreamExt, stream},
+    serde::{Deserialize, de::DeserializeOwned},
     std::{convert::Infallible, future::Future, pin::Pin},
 };
 
@@ -71,8 +71,7 @@ impl From<DatastarEvent> for Sse {
 ///
 /// #[get("/update")]
 /// async fn update() -> impl Responder {
-///     PatchElements::new("<div>Hello!</div>")
-///         .into()
+///     Sse::from(PatchElements::new("<div>Hello!</div>"))
 /// }
 /// ```
 ///
@@ -81,7 +80,7 @@ impl From<DatastarEvent> for Sse {
 /// ```no_run
 /// use actix_web::{get, Responder};
 /// use datastar::actix::Sse;
-/// use datastar::prelude::{DatastarEvent, consts};
+/// use datastar::{consts, prelude::DatastarEvent};
 /// use futures_util::stream;
 /// use std::time::Duration;
 ///
@@ -130,9 +129,9 @@ impl Responder for Sse {
     type Body = BoxBody;
 
     fn respond_to(self, _: &HttpRequest) -> HttpResponse<Self::Body> {
-        let stream = self.stream.map(|event| {
-            Ok::<Bytes, Infallible>(Bytes::from(event.to_string()))
-        });
+        let stream = self
+            .stream
+            .map(|event| Ok::<Bytes, Infallible>(Bytes::from(event.to_string())));
 
         HttpResponse::Ok()
             .content_type("text/event-stream")

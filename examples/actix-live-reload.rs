@@ -1,6 +1,9 @@
-use actix_web::{App, HttpServer, Responder, web::{self, Html}};
+use actix_web::{
+    App, HttpServer, Responder,
+    web::{self, Html},
+};
 use asynk_strim::{Yielder, stream_fn};
-use datastar::{actix::ReadSignals, DatastarEvent, prelude::PatchElements, actix::Sse};
+use datastar::{DatastarEvent, actix::ReadSignals, actix::Sse, prelude::PatchElements};
 use serde::Deserialize;
 use std::time::Duration;
 use {
@@ -10,12 +13,10 @@ use {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                format!("{}=debug", env!("CARGO_CRATE_NAME")).into()
-            }),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
