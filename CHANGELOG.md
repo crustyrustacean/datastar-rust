@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.1 - 2026-09-29
 
 - Sync examples with Datastar 1.0.4 and verify QUERY body signal extraction
   and routing for Axum and Warp. Rocket 0.5 cannot accept custom HTTP methods;
@@ -10,6 +10,7 @@
   require no additional SDK event types or options.
 - Make the official SDK suite reusable locally with native Go or Docker.
 - Pin the default suite to Datastar 1.0.4 and add QUERY HTTP checks.
+- Update dependencies while retaining the Rust 1.89 MSRV.
 
 _Thanks to the Datastar maintainers for the 1.0.3 and 1.0.4 releases._
 
