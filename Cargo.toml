@@ -33,7 +33,7 @@ warp = [
 ]
 
 [dependencies]
-axum = { version = "0.8.5", default-features = false, optional = true, features = [
+axum = { version = "0.8.9", default-features = false, optional = true, features = [
     "query",
     "json",
 ] }
@@ -53,12 +53,12 @@ warp = { version = "0.4", default-features = false, optional = true }
 
 [dev-dependencies]
 asynk-strim = { version = "0.1" }
-axum = { version = "0.8.5", default-features = false, features = [
+axum = { version = "0.8.9", default-features = false, features = [
     "http1",
     "tokio",
 ] }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
-indexmap = { version = "2.11", default-features = false, features = [
+indexmap = { version = "2.14", default-features = false, features = [
     "serde",
     "std",
 ] }
