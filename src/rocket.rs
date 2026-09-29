@@ -1,4 +1,8 @@
 //! Rocket integration for Datastar.
+//!
+//! Rocket 0.5 does not accept custom HTTP methods, so Datastar 1.0.4's
+//! `@query()` action cannot reach a Rocket handler. Use `@post()` with a
+//! [`ReadSignals`] data guard when signals need to be sent in a JSON body.
 
 use {
     crate::{

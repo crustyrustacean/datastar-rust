@@ -2,7 +2,8 @@
 //!
 //! Use its event types to patch HTML or signals and execute scripts in the
 //! browser. Enable [Axum], [Rocket], or [Warp] for framework-native events and
-//! signal extraction.
+//! signal extraction. Supports Datastar 1.0.4, including QUERY body signals
+//! with Axum and Warp. Rocket 0.5 does not support the QUERY HTTP method.
 //!
 //! Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
 //! returns framework-native events instead of providing a

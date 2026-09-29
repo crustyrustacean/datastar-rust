@@ -2,11 +2,16 @@
 
 ## Unreleased
 
-- Sync examples with Datastar 1.0.3; its corrected empty scoped view-transition
-  selector default already matches the Rust SDK.
+- Sync examples with Datastar 1.0.4 and verify QUERY body signal extraction
+  and routing for Axum and Warp. Rocket 0.5 cannot accept custom HTTP methods;
+  use POST for body signals instead.
+- Datastar's SSE format and SDK defaults are unchanged from 1.0.3. The free
+  Datastar Rocket browser bundle and CSP, cancellation, and reactivity fixes
+  require no additional SDK event types or options.
 - Make the official SDK suite reusable locally with native Go or Docker.
+- Pin the default suite to Datastar 1.0.4 and add QUERY HTTP checks.
 
-_Thanks to the Datastar maintainers for the 1.0.3 release._
+_Thanks to the Datastar maintainers for the 1.0.3 and 1.0.4 releases._
 
 ## 0.4.0 - 2026-08-21
 

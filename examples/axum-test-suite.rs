@@ -4,6 +4,9 @@ use {
     asynk_strim::{Yielder, stream_fn},
     axum::{
         Router,
+        extract::Request,
+        handler::Handler,
+        http::StatusCode,
         response::{IntoResponse, Sse, sse::Event},
         routing::{MethodFilter, on},
     },
@@ -24,7 +27,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = Router::new().route("/test", on(MethodFilter::GET.or(MethodFilter::POST), test));
+    let app = Router::new().route(
+        "/test",
+        on(MethodFilter::GET.or(MethodFilter::POST), test).fallback(
+            |request: Request| async move {
+                if request.method().as_str() == "QUERY" {
+                    test.call(request, ()).await
+                } else {
+                    StatusCode::METHOD_NOT_ALLOWED.into_response()
+                }
+            },
+        ),
+    );
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9200")
         .await

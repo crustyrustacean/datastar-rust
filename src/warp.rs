@@ -155,8 +155,10 @@ pub struct ReadSignals<T>(pub T);
 ///
 /// For GET and DELETE requests, signals are extracted from the `datastar` query
 /// parameter. A missing parameter is treated as JSON `null`, allowing
-/// `ReadSignals<Option<T>>` to produce `None`. For POST, PUT, and PATCH
-/// requests, signals are extracted from the JSON body.
+/// `ReadSignals<Option<T>>` to produce `None`. Other methods, including POST,
+/// PUT, PATCH, and Datastar 1.0.4's QUERY, read signals from the JSON body.
+/// To route QUERY requests, use [`warp::method`] and compare
+/// `method.as_str()` with `"QUERY"`.
 ///
 /// # Examples
 ///
@@ -233,7 +235,7 @@ where
             Ok(ReadSignals(signals))
         }
         _ => {
-            // POST/PUT/PATCH: parse body as JSON
+            // Body methods, including QUERY, parse signals as JSON.
             let signals: T = serde_json::from_slice(&body).map_err(|err| {
                 #[cfg(feature = "tracing")]
                 tracing::debug!(%err, "failed to parse JSON value from body");
@@ -476,6 +478,40 @@ mod tests {
             .await
             .unwrap();
         assert!(!missing);
+    }
+
+    #[tokio::test]
+    async fn extracts_query_method_signals_from_body() {
+        let signals = warp::test::request()
+            .method("QUERY")
+            .path("/?datastar=%7B%22count%22%3A1%7D")
+            .header("content-type", "application/json")
+            .header(DATASTAR_REQ_HEADER_STR, "true")
+            .body(r#"{"count":9}"#)
+            .filter(&read_signals_optional::<TestSignals>())
+            .await
+            .unwrap();
+
+        assert_eq!(signals.unwrap().0, TestSignals { count: 9 });
+    }
+
+    #[tokio::test]
+    async fn rejects_invalid_query_method_bodies() {
+        for body in ["", "not-json", r#"{"count":"invalid"}"#] {
+            let response = warp::test::request()
+                .method("QUERY")
+                .path("/?datastar=%7B%22count%22%3A1%7D")
+                .header("content-type", "application/json")
+                .body(body)
+                .reply(
+                    &read_signals::<TestSignals>()
+                        .map(|_| StatusCode::OK)
+                        .recover(handle_rejection),
+                )
+                .await;
+
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        }
     }
 
     #[tokio::test]

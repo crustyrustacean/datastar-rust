@@ -19,8 +19,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    let query = warp::method()
+        .and_then(|method: warp::http::Method| async move {
+            if method.as_str() == "QUERY" {
+                Ok(())
+            } else {
+                Err(warp::reject::not_found())
+            }
+        })
+        .untuple_one();
+
     let test = warp::path("test")
-        .and(warp::get().or(warp::post()).unify())
+        .and(warp::get().or(warp::post()).unify().or(query).unify())
         .and(read_signals::<TestCase>())
         .map(|ReadSignals(test_case): ReadSignals<TestCase>| {
             let stream = stream_fn(

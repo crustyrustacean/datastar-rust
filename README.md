@@ -9,6 +9,9 @@
 An implementation of the [Datastar] SDK in Rust
 with framework integration for [Axum], [Rocket], and [Warp].
 
+Supports Datastar **1.0.4**. Its SSE event format and SDK defaults are unchanged
+from 1.0.3.
+
 Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
 intentionally returns framework-native events instead of providing a
 `ServerSentEventGenerator`.
@@ -19,6 +22,28 @@ intentionally returns framework-native events instead of providing a
 
 Runnable examples for every supported framework can be found in
 [`examples`](./examples).
+
+## QUERY requests
+
+Datastar 1.0.4 adds `@query('/endpoint')`, which sends a `QUERY` request with
+signals in the JSON body. GET and DELETE continue to send signals in the
+`datastar` URL query parameter.
+
+- **Axum:** `ReadSignals<T>` reads QUERY bodies. Route the method using
+  `axum::routing::any` or a method-router fallback; `MethodFilter` does not
+  support custom methods. See [`axum-test-suite`](./examples/axum-test-suite.rs)
+  for a fallback that accepts QUERY and rejects other unhandled methods.
+- **Warp:** `read_signals::<T>()` reads QUERY bodies. Use `warp::method()` to
+  match `method.as_str() == "QUERY"`, as in
+  [`warp-test-suite`](./examples/warp-test-suite.rs).
+- **Rocket 0.5:** custom HTTP methods are rejected before reaching a handler.
+  Use `@post('/endpoint')` and a `ReadSignals<T>` data guard instead.
+
+The new free Datastar Rocket browser bundle is unrelated to Rust's Rocket
+framework. It uses the same SDK events. The other
+[1.0.4 release changes](https://github.com/starfederation/datastar/releases/tag/v1.0.4),
+including CSP nonce aliases, request cancellation, and signal reactivity fixes,
+are handled by the browser bundle.
 
 ## Long-lived streams
 
@@ -47,6 +72,10 @@ Or run the official test runner in Docker:
 ```sh
 make test-datastar-sdk-docker
 ```
+
+The runner defaults to the suite at Datastar 1.0.4 and also checks QUERY routing
+and responses for Axum and Warp. Set `DATASTAR_SDK_TEST_VERSION=latest` to test
+against the newest upstream suite.
 
 [Datastar]: https://data-star.dev
 [Axum]: https://github.com/tokio-rs/axum

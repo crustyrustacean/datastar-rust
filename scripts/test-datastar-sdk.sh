@@ -13,7 +13,7 @@ usage() {
     echo "  --docker  run the official suite with the Go Docker image"
     echo
     echo "environment:"
-    echo "  DATASTAR_SDK_TEST_VERSION  Go module version (default: latest)"
+    echo "  DATASTAR_SDK_TEST_VERSION  Go module version or revision (default: Datastar 1.0.4)"
     echo "  DATASTAR_GO_IMAGE          Docker image (default: golang:1.25)"
 }
 
@@ -93,7 +93,8 @@ trap cleanup EXIT
 
 run_official_suite() {
     local test_package=github.com/starfederation/datastar/sdk/tests/cmd/datastar-sdk-tests
-    local test_version="${DATASTAR_SDK_TEST_VERSION:-latest}"
+    # The tests are a nested Go module, so use the v1.0.4 commit, not its root tag.
+    local test_version="${DATASTAR_SDK_TEST_VERSION:-1efcdc3cb336ec3e9139491604e770e0329657bc}"
 
     if [ "$RUNNER" = native ]; then
         go run "$test_package@$test_version" \
@@ -110,6 +111,36 @@ run_official_suite() {
             -v \
             -server http://host.docker.internal:9200
     fi
+}
+
+run_query_check() {
+    local payload='{"events":[{"type":"patchSignals","signals":{"count":9}}]}'
+    local query_response post_response status
+
+    post_response=$(curl --silent --show-error --fail --max-time 10 \
+        --request POST --header 'Content-Type: application/json' \
+        --header 'Datastar-Request: true' --data-binary "$payload" \
+        http://127.0.0.1:9200/test)
+    # A conflicting URL parameter must not override QUERY's JSON body.
+    query_response=$(curl --silent --show-error --fail --max-time 10 \
+        --request QUERY --header 'Content-Type: application/json' \
+        --header 'Datastar-Request: true' --data-binary "$payload" \
+        'http://127.0.0.1:9200/test?datastar=%7B%22events%22%3A%5B%5D%7D')
+
+    if [[ "$query_response" != "$post_response" || \
+          "$query_response" != *'signals {"count":9}'* ]]; then
+        echo "QUERY did not return the expected body signals as SSE" >&2
+        return 1
+    fi
+
+    status=$(curl --silent --show-error --max-time 10 --output /dev/null \
+        --write-out '%{http_code}' --request OPTIONS http://127.0.0.1:9200/test)
+    if [ "$status" != 405 ]; then
+        echo "expected HTTP 405 for unsupported method, got $status" >&2
+        return 1
+    fi
+
+    echo "QUERY routing and body signals passed"
 }
 
 run_framework() {
@@ -160,6 +191,9 @@ run_framework() {
     fi
 
     run_official_suite
+    if [ "$framework" != rocket ]; then
+        run_query_check
+    fi
     stop_server
     server_log=""
 }

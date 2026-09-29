@@ -176,7 +176,9 @@ struct DatastarParam {
 /// GET and DELETE requests read signals from the `datastar` query parameter.
 /// A missing parameter is treated as JSON `null`, allowing
 /// `ReadSignals<Option<T>>` to produce `None`. Other methods read signals from
-/// the JSON request body.
+/// the JSON request body, including Datastar 1.0.4's `QUERY` method.
+/// Use [`axum::routing::any`] or a method-router fallback to route `QUERY`
+/// requests; Axum's method filters do not include custom methods.
 ///
 /// When the extractor itself is optional, `Option<ReadSignals<T>>` produces
 /// `None` if the `datastar-request` header is absent.
@@ -525,6 +527,43 @@ mod tests {
             .unwrap();
 
         assert_eq!(extracted.0, TestSignals { count: 9 });
+    }
+
+    #[tokio::test]
+    async fn extracts_query_method_signals_from_body() {
+        let request = Request::builder()
+            .method("QUERY")
+            .uri("/?datastar=%7B%22count%22%3A1%7D")
+            .header(http::header::CONTENT_TYPE, "application/json")
+            .header(DATASTAR_REQ_HEADER_STR, "true")
+            .body(Body::from(r#"{"count":9}"#))
+            .unwrap();
+
+        let extracted =
+            <ReadSignals<TestSignals> as OptionalFromRequest<()>>::from_request(request, &())
+                .await
+                .unwrap();
+
+        assert_eq!(extracted.unwrap().0, TestSignals { count: 9 });
+    }
+
+    #[tokio::test]
+    async fn rejects_invalid_query_method_bodies() {
+        for body in ["", "not-json", r#"{"count":"invalid"}"#] {
+            let request = Request::builder()
+                .method("QUERY")
+                .uri("/?datastar=%7B%22count%22%3A1%7D")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .body(Body::from(body))
+                .unwrap();
+
+            let response =
+                <ReadSignals<TestSignals> as FromRequest<()>>::from_request(request, &())
+                    .await
+                    .unwrap_err();
+
+            assert_eq!(response.status(), http::StatusCode::BAD_REQUEST);
+        }
     }
 
     #[tokio::test]
