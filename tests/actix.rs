@@ -203,3 +203,86 @@ async fn read_signals_rejects_invalid_post_body() {
 
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
+
+#[actix_web::test]
+async fn read_signals_from_delete_query_param() {
+    async fn handler(ReadSignals(signals): ReadSignals<TestSignals>) -> impl Responder {
+        HttpResponse::Ok().json(serde_json::json!({
+            "name": signals.name,
+            "count": signals.count,
+        }))
+    }
+
+    let app = test::init_service(App::new().route("/", web::delete().to(handler))).await;
+
+    // Datastar sends DELETE signals in the query parameter, like GET.
+    let json_signals = serde_json::to_string(&TestSignals {
+        name: "deleted".to_owned(),
+        count: 8,
+    })
+    .unwrap();
+    let encoded = urlencoding::encode(&json_signals);
+
+    let req = test::TestRequest::delete()
+        .uri(&format!("/?datastar={encoded}"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    let parsed: TestSignals = serde_json::from_slice(&body).unwrap();
+    assert_eq!(parsed.name, "deleted");
+    assert_eq!(parsed.count, 8);
+}
+
+#[actix_web::test]
+async fn read_signals_missing_query_param_yields_none_for_option() {
+    async fn handler(ReadSignals(maybe): ReadSignals<Option<TestSignals>>) -> impl Responder {
+        match maybe {
+            Some(_) => HttpResponse::Ok().body("signals"),
+            None => HttpResponse::Ok().body("no signals"),
+        }
+    }
+
+    let app = test::init_service(App::new().route("/", web::get().to(handler))).await;
+
+    // A plain page load carries no `datastar` parameter; the extractor
+    // deserializes `null`, so `ReadSignals<Option<T>>` yields `None`.
+    let req = test::TestRequest::get().uri("/").to_request();
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    assert_eq!(body, "no signals");
+}
+
+#[actix_web::test]
+async fn read_signals_get_query_param_populates_option() {
+    async fn handler(ReadSignals(maybe): ReadSignals<Option<TestSignals>>) -> impl Responder {
+        match maybe {
+            Some(_) => HttpResponse::Ok().body("signals"),
+            None => HttpResponse::Ok().body("no signals"),
+        }
+    }
+
+    let app = test::init_service(App::new().route("/", web::get().to(handler))).await;
+
+    let json_signals = serde_json::to_string(&TestSignals {
+        name: "query".to_owned(),
+        count: 7,
+    })
+    .unwrap();
+    let encoded = urlencoding::encode(&json_signals);
+
+    let req = test::TestRequest::get()
+        .uri(&format!("/?datastar={encoded}"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    assert_eq!(body, "signals");
+}

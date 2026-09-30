@@ -142,7 +142,7 @@ impl Responder for Sse {
 
 #[derive(Deserialize)]
 struct DatastarParam {
-    datastar: serde_json::Value,
+    datastar: Option<serde_json::Value>,
 }
 
 /// [`ReadSignals`] is a request extractor that reads datastar signals from the request.
@@ -174,17 +174,22 @@ impl<T: DeserializeOwned + 'static> FromRequest for ReadSignals<T> {
 
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
         let req = req.clone();
-        let is_get = req.method() == Method::GET;
+        // Datastar sends signals in the `datastar` query parameter for GET and
+        // DELETE, and in the JSON body for every other method (including QUERY).
+        let is_query = matches!(*req.method(), Method::GET | Method::DELETE);
 
-        if is_get {
+        if is_query {
             let query_fut = web::Query::<DatastarParam>::from_request(&req, payload);
             Box::pin(async move {
                 let query = query_fut.await?;
-                let signals = query
-                    .0
-                    .datastar
-                    .as_str()
-                    .ok_or_else(|| error::ErrorBadRequest("Failed to parse JSON str"))?;
+                let signals = match query.0.datastar.as_ref() {
+                    Some(value) => value
+                        .as_str()
+                        .ok_or_else(|| error::ErrorBadRequest("Failed to parse JSON str"))?,
+                    // No `datastar` parameter: deserialize `null` so that
+                    // `ReadSignals<Option<T>>` yields `None` on a full page load.
+                    None => "null",
+                };
                 let parsed: T = serde_json::from_str(signals).map_err(
                     #[cfg_attr(not(feature = "tracing"), expect(unused_variables))]
                     |err| {
