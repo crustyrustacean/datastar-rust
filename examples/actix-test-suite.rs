@@ -1,15 +1,14 @@
+mod sdk_test;
+
 use {
     actix_web::{App, HttpServer, Responder, web},
     asynk_strim::{Yielder, stream_fn},
+    core::error::Error,
     datastar::{
+        DatastarEvent,
         actix::{ReadSignals, Sse},
-        consts,
-        prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
     },
-    indexmap::IndexMap,
-    serde::Deserialize,
-    serde_json::Value,
-    std::{error::Error, time::Duration},
+    sdk_test::TestCase,
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
 
@@ -25,7 +24,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     HttpServer::new(|| {
         App::new()
-            // The conformance test runner uses a combination of GET and POST requests.
+            // The conformance test runner uses a combination of GET, POST, and
+            // QUERY requests. `web::route` dispatches on the method, and
+            // `ReadSignals` reads the query parameter for GET/DELETE and the
+            // JSON body otherwise.
             .route("/test", web::route().to(test))
     })
     .bind(("127.0.0.1", 9200))?
@@ -35,131 +37,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[derive(Deserialize)]
-pub struct TestCase {
-    pub events: Vec<TestCaseEvent>,
-}
-
-#[derive(Deserialize)]
-#[serde(tag = "type")]
-pub enum TestCaseEvent {
-    #[serde(alias = "executeScript")]
-    ExecuteScript {
-        script: String,
-        #[serde(alias = "eventId")]
-        event_id: Option<String>,
-        #[serde(alias = "retryDuration")]
-        retry_duration: Option<u64>,
-        attributes: Option<IndexMap<String, Value>>,
-        #[serde(alias = "autoRemove")]
-        auto_remove: Option<bool>,
-    },
-    #[serde(rename = "patchElements")]
-    PatchElements {
-        elements: Option<String>,
-        #[serde(alias = "eventId")]
-        event_id: Option<String>,
-        #[serde(alias = "retryDuration")]
-        retry_duration: Option<u64>,
-        selector: Option<String>,
-        mode: Option<String>,
-        #[serde(alias = "useViewTransition")]
-        use_view_transition: Option<bool>,
-    },
-    #[serde(rename = "patchSignals")]
-    PatchSignals {
-        signals: Option<IndexMap<String, Value>>,
-        #[serde(alias = "signals-raw")]
-        signals_raw: Option<String>,
-        #[serde(alias = "eventId")]
-        event_id: Option<String>,
-        #[serde(alias = "retryDuration")]
-        retry_duration: Option<u64>,
-        #[serde(alias = "onlyIfMissing")]
-        only_if_missing: Option<bool>,
-    },
-}
-
 async fn test(ReadSignals(test_case): ReadSignals<TestCase>) -> impl Responder {
     Sse::new(stream_fn(
         |mut yielder: Yielder<DatastarEvent>| async move {
             for event in test_case.events {
-                let sse_event = match event {
-                    TestCaseEvent::ExecuteScript {
-                        script,
-                        event_id,
-                        retry_duration,
-                        attributes,
-                        auto_remove,
-                    } => ExecuteScript {
-                        script,
-                        id: event_id,
-                        retry: Duration::from_millis(
-                            retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION),
-                        ),
-                        auto_remove,
-                        attributes: attributes
-                            .map(|attributes| {
-                                attributes
-                                    .into_iter()
-                                    .map(|(key, value)| {
-                                        format!("{key}=\"{}\"", value.to_string().trim_matches('"'))
-                                    })
-                                    .collect()
-                            })
-                            .unwrap_or_default(),
-                    }
-                    .into_datastar_event(),
-                    TestCaseEvent::PatchElements {
-                        elements,
-                        event_id,
-                        retry_duration,
-                        mode,
-                        selector,
-                        use_view_transition,
-                    } => PatchElements {
-                        id: event_id,
-                        retry: Duration::from_millis(
-                            retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION),
-                        ),
-                        elements,
-                        selector,
-                        mode: match mode.as_deref().unwrap_or_default() {
-                            "outer" => consts::ElementPatchMode::Outer,
-                            "inner" => consts::ElementPatchMode::Inner,
-                            "remove" => consts::ElementPatchMode::Remove,
-                            "replace" => consts::ElementPatchMode::Replace,
-                            "prepend" => consts::ElementPatchMode::Prepend,
-                            "append" => consts::ElementPatchMode::Append,
-                            "before" => consts::ElementPatchMode::Before,
-                            "after" => consts::ElementPatchMode::After,
-                            _ => consts::ElementPatchMode::Outer,
-                        },
-                        use_view_transition: use_view_transition.unwrap_or_default(),
-                    }
-                    .into_datastar_event(),
-                    TestCaseEvent::PatchSignals {
-                        signals,
-                        signals_raw,
-                        event_id,
-                        retry_duration,
-                        only_if_missing,
-                    } => PatchSignals {
-                        id: event_id,
-                        retry: Duration::from_millis(
-                            retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION),
-                        ),
-                        signals: signals_raw.unwrap_or_else(|| {
-                            signals
-                                .map(|s| serde_json::to_string(&s).unwrap_or_default())
-                                .unwrap_or_default()
-                        }),
-                        only_if_missing: only_if_missing.unwrap_or_default(),
-                    }
-                    .into_datastar_event(),
-                };
-
-                yielder.yield_item(sse_event).await;
+                yielder.yield_item(event.into_datastar_event()).await;
             }
         },
     ))
