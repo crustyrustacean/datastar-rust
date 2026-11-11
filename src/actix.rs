@@ -86,6 +86,12 @@ impl DatastarEvent {
             None => data,
         };
 
+        let data = if self.retry.as_millis() != crate::consts::DEFAULT_SSE_RETRY_DURATION as u128 {
+            data.retry(self.retry)
+        } else {
+            data
+        };
+
         Event::Data(data)
     }
 }
@@ -242,6 +248,7 @@ mod tests {
             web::Bytes,
         },
         actix_web_lab::sse::Sse,
+        core::time::Duration,
         tokio_stream::iter,
     };
 
@@ -274,6 +281,20 @@ mod tests {
                 "data: namespace svg\n",
                 "data: elements <circle id=\"dot\" />\n",
                 "data: elements <path />\n\n",
+            )
+        );
+    }
+
+    #[actix_web::test]
+    async fn writes_custom_retry_duration() {
+        let event = PatchSignals::new("{count: 1}").retry(Duration::from_millis(2_500));
+
+        assert_eq!(
+            render(event.write_as_actix_web_sse_event()).await,
+            concat!(
+                "event: datastar-patch-signals\n",
+                "retry: 2500\n",
+                "data: signals {count: 1}\n\n",
             )
         );
     }
