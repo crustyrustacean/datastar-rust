@@ -23,6 +23,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 actix = [
     "dep:actix-web",
+    "dep:actix-web-lab",
     "dep:bytes",
     "dep:futures-util",
     "dep:serde",
@@ -41,6 +42,7 @@ warp = [
 
 [dependencies]
 actix-web = { version = "4", default-features = false, optional = true }
+actix-web-lab = { version = "0.29.5", default-features = false, optional = true }
 axum = { version = "0.8.9", default-features = false, optional = true, features = [
     "query",
     "json",
