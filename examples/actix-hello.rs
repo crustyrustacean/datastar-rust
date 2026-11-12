@@ -4,7 +4,7 @@ use actix_web::{
 };
 use actix_web_lab::sse::{Event, Sse};
 use asynk_strim::{Yielder, stream_fn};
-use datastar::{actix::ReadSignals, prelude::PatchElements};
+use datastar::{actix_web::ReadSignals, prelude::PatchElements};
 use serde::Deserialize;
 use std::time::Duration;
 use {

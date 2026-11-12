@@ -125,7 +125,7 @@ struct DatastarParam {
 /// # Examples
 ///
 /// ```
-/// use datastar::actix::ReadSignals;
+/// use datastar::actix_web::ReadSignals;
 /// use serde::Deserialize;
 ///
 /// #[derive(Deserialize)]

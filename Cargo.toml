@@ -135,7 +135,7 @@ lto = "thin"
 
 [[example]]
 name = "actix-hello"
-required-features = ["actix", "tracing"]
+required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "axum-hello"
@@ -147,11 +147,11 @@ required-features = ["axum", "tracing"]
 
 [[example]]
 name = "actix-live-reload"
-required-features = ["actix", "tracing"]
+required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "actix-activity-feed"
-required-features = ["actix", "tracing"]
+required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "axum-activity-feed"
@@ -167,7 +167,7 @@ required-features = ["axum", "tracing"]
 
 [[example]]
 name = "actix-test-suite"
-required-features = ["actix", "tracing"]
+required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "rocket-hello"

@@ -5,7 +5,7 @@ use {
     actix_web_lab::sse::{Event, Sse},
     asynk_strim::{Yielder, stream_fn},
     core::error::Error,
-    datastar::actix::ReadSignals,
+    datastar::actix_web::ReadSignals,
     sdk_test::TestCase,
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };

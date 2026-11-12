@@ -5,7 +5,7 @@ use actix_web::{
 use actix_web_lab::sse::{Event, Sse};
 use asynk_strim::{Yielder, stream_fn};
 use datastar::{
-    actix::ReadSignals,
+    actix_web::ReadSignals,
     prelude::{ElementPatchMode, PatchElements, PatchSignals},
 };
 use serde::{Deserialize, Serialize};
