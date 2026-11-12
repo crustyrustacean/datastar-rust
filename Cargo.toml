@@ -21,11 +21,9 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-actix = [
+actix-web = [
     "dep:actix-web",
     "dep:actix-web-lab",
-    "dep:bytes",
-    "dep:futures-util",
     "dep:serde",
     "dep:serde_json",
 ]
@@ -48,7 +46,6 @@ axum = { version = "0.8.9", default-features = false, optional = true, features 
     "json",
 ] }
 bytes = { version = "1", default-features = false, optional = true }
-futures-util = { version = "0.3.33", default-features = false, optional = true }
 rocket = { version = "0.5", default-features = false, optional = true }
 serde = { version = "1", default-features = false, optional = true, features = [
     "derive",
